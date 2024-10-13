@@ -1,3 +1,6 @@
+console.log("%c [Better Prestige Bar] Loaded the add-on! ", 'color:black;background-color:#ff0088');
+Game.Popup("Loaded add-on Better Prestige Bar!")
+
 let logic = function()
 	{
 		Game.bounds=Game.l.getBounds();
@@ -380,10 +383,10 @@ let logic = function()
 			var ascendNowToOwn=Math.floor(Game.HowMuchPrestige(Game.cookiesReset+Game.cookiesEarned));
 			var ascendNowToGet=ascendNowToOwn-Math.floor(chipsOwned);
 			var nextChipAt=Game.HowManyCookiesReset(Math.floor(chipsOwned+ascendNowToGet+1))-Game.HowManyCookiesReset(Math.floor(chipsOwned+ascendNowToGet));
-			var cookiesToNext=Game.HowManyCookiesReset(ascendNowToOwn+1)-(Game.cookiesEarned+Game.cookiesReset);
-			var percent=1-(cookiesToNext/nextChipAt);
+			var cookiesToNext = Game.HowManyCookiesReset(ascendNowToOwn + 1) - (Game.cookiesEarned + Game.cookiesReset);
 			
-			// ! ADDED ! ///////////////////////////
+			// !
+			
 			var barPer = 1;
 
 			    if (Game.avgNewLevelsPer >= 100000) {
@@ -410,6 +413,19 @@ let logic = function()
 				Game.ascendMeter.setAttribute("style", "filter: none;")
 			    }
 			    
+			var nextBarPerLvl = Math.ceil(Math.floor(chipsOwned + ascendNowToGet + 1) / barPer) * barPer;
+    			var currentLvl = Math.floor(chipsOwned + ascendNowToGet);
+			
+			Game.cookiesToBarFull = Game.HowManyCookiesReset(Math.ceil((ascendNowToOwn + 1) / barPer) * barPer) - (Game.cookiesEarned + Game.cookiesReset);
+			Game.nextBarFullAt = Game.HowManyCookiesReset(nextBarPerLvl) - Game.HowManyCookiesReset(Math.ceil(Math.floor(chipsOwned + ascendNowToGet + 1) / barPer - 1) * barPer)
+    
+			var percent = 1 - (Game.cookiesToBarFull / Game.nextBarFullAt);
+			
+			var newLevelsPer = ascendNowToGet - Game.oldAscendNowToGet;
+			
+			Game.avgNewLevelsPer = isNaN(Game.avgNewLevelsPer) ? 0 : ((newLevelsPer * 3) + Game.avgNewLevelsPer * 5) / 6;
+        		Game.oldAscendNowToGet = ascendNowToGet;
+			    
 			/////////////////////////////////
 			
 			//fill the tooltip under the Legacy tab
@@ -421,6 +437,8 @@ let logic = function()
 			//// ! ADDED ! /////////////////////////////////////////////
 			
 			        var displayNewLevels = '<b style="color:#';
+			        var levelsLeftToResetBar = (Math.ceil(Math.floor(chipsOwned + ascendNowToGet + 1) / barPer) * barPer) - (Math.floor(chipsOwned + ascendNowToGet))
+        			Game.cookiesToNextPer = Game.HowManyCookiesReset(ascendNowToOwn + levelsLeftToResetBar) - (Game.cookiesEarned + Game.cookiesReset);
 				if (Game.avgNewLevelsPer >= 100000) {
 				    displayNewLevels += 'ff0000;">' + Beautify(1000000) + ' prestige levels';
 				} else if (Game.avgNewLevelsPer >= 10000) {
@@ -464,6 +482,7 @@ let logic = function()
 				//note: cookiesToNext can be negative at higher HC amounts due to precision loss. we simply hide it in such cases, as this usually only occurs when the gap is small and rapidly overcome anyway
 				str+='<div class="line"></div>';
 				str+=loc("You need <b>%1 more cookies</b> for the next level.",Beautify(cookiesToNext))+'<br>';
+				if (barPer > 1 && levelsLeftToResetBar > 1) str += "You need <b>"+Beautify(Game.cookiesToNextPer)+" more cookies</b> for the next "+Beautify(Math.ceil(levelsLeftToResetBar))+" levels.<br>";
 			}
 			l('ascendTooltip').innerHTML=str;
 			
@@ -477,17 +496,18 @@ let logic = function()
 				Game.ascendNumber.style.display='none';
 			}
 			
-			if (ascendNowToGet>Game.ascendMeterLevel || Game.ascendMeterPercentT<Game.ascendMeterPercent)
-			{
-				//reset the gauge and play a sound if we gained a potential level
-				Game.ascendMeterPercent=0;
-				//PlaySound('snd/levelPrestige.mp3');//a bit too annoying
-			}
 			Game.ascendMeterLevel=ascendNowToGet;
 			Game.ascendMeterPercentT=percent;//gauge that fills up as you near your next chip
 			//if (Game.ascendMeterPercentT<Game.ascendMeterPercent) {Game.ascendMeterPercent=0;PlaySound('snd/levelPrestige.mp3',0.5);}
 			//if (percent>=1) {Game.ascendMeter.className='';} else Game.ascendMeter.className='filling';
 		}
+		
+		// ! ADDED ! ///////////////////////////
+		
+		var ascendNowToGet = Game.oldAscendNowToGet;
+		
+		/////////////////////////////////////////
+		
 		//Game.ascendMeter.style.right=Math.floor(Math.max(0,1-Game.ascendMeterPercent)*100)+'px';
 		Game.ascendMeter.style.backgroundPosition=(-Game.T*0.5-Game.ascendMeterPercent*100)+'px';
 		Game.ascendMeter.style.transform='translate('+Math.floor(-Math.max(0,1-Game.ascendMeterPercent)*100)+'%,0px)';
